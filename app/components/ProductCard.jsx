@@ -1,13 +1,15 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
 
 export default function ProductCard({ product }) {
-  const { addToCart }              = useCart()
+  const router = useRouter()
+  const { addToCart }               = useCart()
   const { wishIds, toggleWishlist } = useWishlist()
-  const [adding, setAdding]        = useState(false)
+  const [adding, setAdding]         = useState(false)
 
   const isWished = wishIds.includes(product._id)
   const stars    = Math.round(product.ratingsAverage || 0)
@@ -21,6 +23,11 @@ export default function ProductCard({ product }) {
   function handleWish(e) {
     e.preventDefault(); e.stopPropagation()
     toggleWishlist(product)
+  }
+  // Quick-view uses router.push so we avoid a nested <a> inside the outer <Link>
+  function handleQuickView(e) {
+    e.preventDefault(); e.stopPropagation()
+    router.push(`/products/${product._id}`)
   }
 
   return (
@@ -58,15 +65,14 @@ export default function ProductCard({ product }) {
                 : <i className="fas fa-sync-alt" />}
             </button>
 
-            {/* Quick view */}
-            <Link
-              href={`/products/${product._id}`}
+            {/* Quick view — button with router.push (avoids nested <a> hydration error) */}
+            <button
               className="fc-action-btn"
+              onClick={handleQuickView}
               title="Quick view"
-              onClick={e => e.stopPropagation()}
             >
               <i className="far fa-eye" />
-            </Link>
+            </button>
           </div>
         </div>
 

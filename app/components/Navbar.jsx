@@ -5,15 +5,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
+import axiosInstance from '../lib/axiosInstance'
 import toast from 'react-hot-toast'
-
-const CAT_DROPDOWN = [
-  { label: 'All Categories',  href: '/categories' },
-  { label: 'Electronics',     href: '/categories' },
-  { label: "Women's Fashion", href: '/categories' },
-  { label: "Men's Fashion",   href: '/categories' },
-  { label: 'Beauty & Health', href: '/categories' },
-]
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -22,8 +15,16 @@ export default function Navbar() {
   const { cartCount }         = useCart()
   const { wishCount }         = useWishlist()
 
-  const [catOpen, setCatOpen] = useState(false)
+  const [catOpen,   setCatOpen]   = useState(false)
+  const [navCats,   setNavCats]   = useState([])
   const catRef = useRef(null)
+
+  // Fetch real categories for dropdown
+  useEffect(() => {
+    axiosInstance.get('/api/v1/categories?limit=8')
+      .then(r => setNavCats(r.data.data?.slice(0, 6) || []))
+      .catch(() => {})
+  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -136,30 +137,42 @@ export default function Navbar() {
                     background: '#fff',
                     boxShadow: '0 8px 32px rgba(0,0,0,0.13)',
                     borderRadius: 10,
-                    minWidth: 200,
+                    minWidth: 210,
                     zIndex: 2000,
                     border: '1px solid #e9ecef',
                     overflow: 'hidden',
                     animation: 'fadeInDown 0.15s ease',
                   }}>
-                    {CAT_DROPDOWN.map((item, i) => (
+                    {/* All Categories — always first */}
+                    <Link
+                      href="/categories"
+                      onClick={() => setCatOpen(false)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', color: '#0aad0a', fontSize: '0.9rem', fontWeight: 700, borderBottom: '1px solid #f4f4f4', background: '#f0fdf4' }}
+                    >
+                      <i className="fas fa-th-large" style={{ fontSize: '0.8rem' }} />
+                      All Categories
+                    </Link>
+
+                    {/* Real categories from API */}
+                    {navCats.map((cat, i) => (
                       <Link
-                        key={i}
-                        href={item.href}
+                        key={cat._id}
+                        href={`/products?cat=${cat._id}&catname=${encodeURIComponent(cat.name)}`}
                         onClick={() => setCatOpen(false)}
                         style={{
-                          display: 'block',
+                          display: 'flex', alignItems: 'center', gap: 8,
                           padding: '11px 20px',
                           color: '#253d4e',
                           fontSize: '0.9rem',
                           fontWeight: 500,
-                          borderBottom: i < CAT_DROPDOWN.length - 1 ? '1px solid #f4f4f4' : 'none',
+                          borderBottom: i < navCats.length - 1 ? '1px solid #f4f4f4' : 'none',
                           transition: 'all 0.15s',
                         }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#f0fdf4'; e.currentTarget.style.color = '#0aad0a'; e.currentTarget.style.paddingLeft = '26px' }}
                         onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#253d4e'; e.currentTarget.style.paddingLeft = '20px' }}
                       >
-                        {item.label}
+                        <i className="fas fa-chevron-right" style={{ fontSize: '0.65rem', opacity: 0.4 }} />
+                        {cat.name}
                       </Link>
                     ))}
                   </div>

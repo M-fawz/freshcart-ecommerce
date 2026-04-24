@@ -21,18 +21,21 @@ function ProductsContent() {
   const searchParams   = useSearchParams()
   const urlSubcategory = searchParams.get('subcategory') || ''
   const urlName        = searchParams.get('name') || ''
+  // ?cat=ID&catname=NAME — set by Navbar category dropdown
+  const urlCat         = searchParams.get('cat') || ''
+  const urlCatName     = searchParams.get('catname') || ''
 
-  const [products,   setProducts]   = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading,    setLoading]    = useState(true)
-  const [error,      setError]      = useState(null)
-  const [search,     setSearch]     = useState('')
-  const [selectedCat, setSelectedCat] = useState('')
-  const [sort,       setSort]       = useState('-ratingsAverage')
-  const [page,       setPage]       = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [total,      setTotal]      = useState(0)
-  const [activeSub,  setActiveSub]  = useState({ id: urlSubcategory, name: urlName })
+  const [products,    setProducts]   = useState([])
+  const [categories,  setCategories] = useState([])
+  const [loading,     setLoading]    = useState(true)
+  const [error,       setError]      = useState(null)
+  const [search,      setSearch]     = useState('')
+  const [selectedCat, setSelectedCat] = useState(urlCat)   // pre-fill from URL
+  const [sort,        setSort]       = useState('-ratingsAverage')
+  const [page,        setPage]       = useState(1)
+  const [totalPages,  setTotalPages] = useState(1)
+  const [total,       setTotal]      = useState(0)
+  const [activeSub,   setActiveSub]  = useState({ id: urlSubcategory, name: urlName })
 
   /* Fetch categories once */
   useEffect(() => {
@@ -40,6 +43,12 @@ function ProductsContent() {
       .then(r => setCategories(r.data.data || []))
       .catch(console.error)
   }, [])
+
+  /* Sync ?cat URL param (from Navbar dropdown) */
+  useEffect(() => {
+    if (urlCat) { setSelectedCat(urlCat); setPage(1) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlCat])
 
   /* Sync URL subcategory param on mount */
   useEffect(() => {
@@ -180,7 +189,7 @@ function ProductsContent() {
                 style={{ background: 'rgba(10,173,10,0.1)', color: '#0aad0a', borderRadius: 20, fontWeight: 600, fontSize: '0.82rem' }}
               >
                 <i className="fas fa-times-circle" />
-                {categories.find(c => c._id === selectedCat)?.name}&nbsp;×
+                {categories.find(c => c._id === selectedCat)?.name || urlCatName}&nbsp;×
               </button>
             )}
           </div>

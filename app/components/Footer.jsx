@@ -12,12 +12,12 @@ const COL_SHOP = [
   { href: '/products',   label: 'All Products' },
   { href: '/categories', label: 'Categories' },
   { href: '/brands',     label: 'Brands' },
-  { href: '/products',   label: 'Electronics' },
-  { href: '/products',   label: "Men's Fashion" },
-  { href: '/products',   label: "Women's Fashion" },
+  { href: '/categories', label: 'Electronics' },
+  { href: '/categories', label: "Men's Fashion" },
+  { href: '/categories', label: "Women's Fashion" },
 ]
 const COL_ACCOUNT = [
-  { href: '/login',     label: 'My Account' },
+  { href: '/allorders', label: 'My Account' },
   { href: '/allorders', label: 'Order History' },
   { href: '/wishlist',  label: 'Wishlist' },
   { href: '/cart',      label: 'Shopping Cart' },
@@ -25,16 +25,16 @@ const COL_ACCOUNT = [
   { href: '/register',  label: 'Create Account' },
 ]
 const COL_SUPPORT = [
-  { href: '#', label: 'Contact Us' },
-  { href: '#', label: 'Help Center' },
-  { href: '#', label: 'Shipping Info' },
-  { href: '#', label: 'Returns & Refunds' },
-  { href: '#', label: 'Track Order' },
+  { href: '/products',  label: 'Contact Us' },
+  { href: '/products',  label: 'Help Center' },
+  { href: '/products',  label: 'Shipping Info' },
+  { href: '/products',  label: 'Returns & Refunds' },
+  { href: '/allorders', label: 'Track Order' },
 ]
 const COL_LEGAL = [
-  { href: '#', label: 'Privacy Policy' },
-  { href: '#', label: 'Terms of Service' },
-  { href: '#', label: 'Cookie Policy' },
+  { href: '/', label: 'Privacy Policy' },
+  { href: '/', label: 'Terms of Service' },
+  { href: '/', label: 'Cookie Policy' },
 ]
 
 const PAYMENT_ICONS = [
