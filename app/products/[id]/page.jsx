@@ -1,13 +1,12 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import axios from 'axios'
+import axiosInstance from '../../lib/axiosInstance'
 import ProductCard from '../../components/ProductCard'
 import { useCart } from '../../context/CartContext'
 import { useWishlist } from '../../context/WishlistContext'
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
 
 export default function ProductDetailsPage() {
   const { id }                          = useParams()
@@ -24,14 +23,14 @@ export default function ProductDetailsPage() {
     if (!id) return
     setLoading(true); setActiveImg(0); window.scrollTo(0, 0)
 
-    axios.get(`${API}/api/v1/products/${id}`)
+    axiosInstance.get(`/api/v1/products/${id}`)
       .then(async ({ data }) => {
         const p = data.data
         setProduct(p)
 
         const catId = p?.category?._id
         if (catId) {
-          const rel = await axios.get(`${API}/api/v1/products?category[in][]=${catId}&limit=5`)
+          const rel = await axiosInstance.get(`/api/v1/products?category[in][]=${catId}&limit=5`)
           setRelated((rel.data.data || []).filter(x => x._id !== id))
         }
       })

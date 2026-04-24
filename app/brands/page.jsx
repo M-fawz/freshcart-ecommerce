@@ -1,9 +1,8 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import axios from 'axios'
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
+import axiosInstance from '../lib/axiosInstance'
 
 export default function BrandsPage() {
   const [brands, setBrands] = useState([])
@@ -12,7 +11,7 @@ export default function BrandsPage() {
   const [selected, setSelected] = useState(null)
 
   useEffect(() => {
-    axios.get(`${API}/api/v1/brands`)
+    axiosInstance.get('/api/v1/brands')
       .then(r => setBrands(r.data.data || []))
       .catch(console.error)
       .finally(() => setLoading(false))

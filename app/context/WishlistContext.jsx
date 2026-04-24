@@ -1,17 +1,15 @@
 'use client'
 import { createContext, useContext, useState, useEffect } from 'react'
-import axios from 'axios'
+import axiosInstance from '../lib/axiosInstance'
 import toast from 'react-hot-toast'
 import { useAuth } from './AuthContext'
 
 export const WishlistContext = createContext()
 
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
-
 export function WishlistProvider({ children }) {
   const { userToken } = useAuth()
   const [wishItems, setWishItems] = useState([])
-  const [wishIds, setWishIds] = useState([])
+  const [wishIds,   setWishIds]   = useState([])
   const [wishCount, setWishCount] = useState(0)
 
   const headers = { token: userToken }
@@ -19,7 +17,7 @@ export function WishlistProvider({ children }) {
   async function getWishlist() {
     if (!userToken) return
     try {
-      const { data } = await axios.get(`${API}/api/v1/wishlist`, { headers })
+      const { data } = await axiosInstance.get('/api/v1/wishlist', { headers })
       if (data.status === 'success') {
         setWishItems(data.data || [])
         setWishIds((data.data || []).map(p => p._id))
@@ -34,7 +32,7 @@ export function WishlistProvider({ children }) {
       await removeFromWishlist(product._id)
     } else {
       try {
-        const { data } = await axios.post(`${API}/api/v1/wishlist`, { productId: product._id }, { headers })
+        const { data } = await axiosInstance.post('/api/v1/wishlist', { productId: product._id }, { headers })
         if (data.status === 'success') {
           await getWishlist()
           toast.success('Added to wishlist ❤️')
@@ -45,10 +43,10 @@ export function WishlistProvider({ children }) {
 
   async function removeFromWishlist(productId) {
     try {
-      const { data } = await axios.delete(`${API}/api/v1/wishlist/${productId}`, { headers })
+      const { data } = await axiosInstance.delete(`/api/v1/wishlist/${productId}`, { headers })
       if (data.status === 'success') {
         setWishItems(p => p.filter(x => x._id !== productId))
-        setWishIds(p => p.filter(x => x !== productId))
+        setWishIds(p   => p.filter(x => x !== productId))
         setWishCount(p => Math.max(0, p - 1))
         toast.success('Removed from wishlist')
       }

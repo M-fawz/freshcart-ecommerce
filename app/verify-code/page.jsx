@@ -1,12 +1,11 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import axios from 'axios'
+import axiosInstance from '../lib/axiosInstance'
 import toast from 'react-hot-toast'
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
 
 export default function VerifyCodePage() {
   const router = useRouter()
@@ -17,7 +16,7 @@ export default function VerifyCodePage() {
     validationSchema: Yup.object({ resetCode: Yup.string().length(6,'Code must be 6 digits').required() }),
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        const { data } = await axios.put(`${API}/api/v1/auth/verifyResetCode`, values)
+        const { data } = await axiosInstance.put('/api/v1/auth/verifyResetCode', values)
         if (data.status === 'Success') {
           toast.success('Code verified! Set your new password.')
           router.push('/reset-password')

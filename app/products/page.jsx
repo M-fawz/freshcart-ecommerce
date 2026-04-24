@@ -1,46 +1,73 @@
 'use client'
-import { useState, useEffect } from 'react'
+export const dynamic = 'force-dynamic'
+import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
-import axios from 'axios'
+import { useSearchParams } from 'next/navigation'
+import axiosInstance from '../lib/axiosInstance'
 import ProductCard from '../components/ProductCard'
 
-const API   = process.env.NEXT_PUBLIC_API_BASE_URL
 const LIMIT = 12
 
+// Wrap the page in Suspense because useSearchParams() requires it in Next.js 14
 export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="fc-loader"><div className="fc-spinner" /><p style={{ color: '#7d879c' }}>Loading products…</p></div>}>
+      <ProductsContent />
+    </Suspense>
+  )
+}
+
+function ProductsContent() {
+  const searchParams   = useSearchParams()
+  const urlSubcategory = searchParams.get('subcategory') || ''
+  const urlName        = searchParams.get('name') || ''
+
   const [products,   setProducts]   = useState([])
   const [categories, setCategories] = useState([])
   const [loading,    setLoading]    = useState(true)
+  const [error,      setError]      = useState(null)
   const [search,     setSearch]     = useState('')
   const [selectedCat, setSelectedCat] = useState('')
   const [sort,       setSort]       = useState('-ratingsAverage')
   const [page,       setPage]       = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total,      setTotal]      = useState(0)
+  const [activeSub,  setActiveSub]  = useState({ id: urlSubcategory, name: urlName })
 
   /* Fetch categories once */
   useEffect(() => {
-    axios.get(`${API}/api/v1/categories`)
+    axiosInstance.get('/api/v1/categories')
       .then(r => setCategories(r.data.data || []))
       .catch(console.error)
   }, [])
 
-  /* Fetch products when page / cat / sort change */
+  /* Sync URL subcategory param on mount */
+  useEffect(() => {
+    if (urlSubcategory) setActiveSub({ id: urlSubcategory, name: urlName })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSubcategory])
+
+  /* Fetch products when page / cat / sort / activeSub change */
   useEffect(() => {
     fetchProducts()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, selectedCat, sort])
+  }, [page, selectedCat, sort, activeSub.id])
 
   async function fetchProducts() {
     setLoading(true)
+    setError(null)
     try {
-      let url = `${API}/api/v1/products?limit=${LIMIT}&page=${page}&sort=${sort}`
-      if (selectedCat) url += `&category[in][]=${selectedCat}`
-      const { data } = await axios.get(url)
+      let url = `/api/v1/products?limit=${LIMIT}&page=${page}&sort=${sort}`
+      if (selectedCat)    url += `&category[in][]=${selectedCat}`
+      if (activeSub.id)   url += `&subcategory[in][]=${activeSub.id}`
+      const { data } = await axiosInstance.get(url)
       setProducts(data.data || [])
       setTotalPages(data.metadata?.numberOfPages || 1)
       setTotal(data.results || data.data?.length || 0)
-    } catch (err) { console.error(err) }
+    } catch (err) {
+      console.error(err)
+      setError('Could not load products. Check your connection or try again.')
+    }
     finally { setLoading(false) }
   }
 
@@ -48,8 +75,9 @@ export default function ProductsPage() {
     p.title.toLowerCase().includes(search.toLowerCase())
   )
 
-  function changeCat(val) { setSelectedCat(val); setPage(1) }
+  function changeCat(val) { setSelectedCat(val); setActiveSub({ id: '', name: '' }); setPage(1) }
   function changeSort(val) { setSort(val); setPage(1) }
+  function clearAllFilters() { setSearch(''); setSelectedCat(''); setActiveSub({ id: '', name: '' }); setPage(1) }
 
   /* Page number buttons — show at most 7 pages */
   function pageNumbers() {
@@ -131,18 +159,30 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* ── Clear category chip ── */}
-        {selectedCat && (
-          <div className="mb-3">
-            <button
-              onClick={() => changeCat('')}
-              className="btn btn-sm d-inline-flex align-items-center gap-2"
-              style={{ background: 'rgba(10,173,10,0.1)', color: '#0aad0a', borderRadius: 20, fontWeight: 600, fontSize: '0.82rem' }}
-            >
-              <i className="fas fa-times-circle" />
-              {categories.find(c => c._id === selectedCat)?.name}
-              &nbsp;×
-            </button>
+        {/* ── Active filter chips ── */}
+        {(selectedCat || activeSub.id) && (
+          <div className="mb-3 d-flex flex-wrap gap-2 align-items-center">
+            {activeSub.id && (
+              <span
+                style={{ background: 'rgba(10,173,10,0.1)', color: '#0aad0a', borderRadius: 20, fontWeight: 600, fontSize: '0.82rem', padding: '4px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <i className="fas fa-list" /> Sub: {activeSub.name}
+                <button
+                  onClick={() => setActiveSub({ id: '', name: '' })}
+                  style={{ background: 'none', border: 'none', color: '#0aad0a', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                >×</button>
+              </span>
+            )}
+            {selectedCat && (
+              <button
+                onClick={() => changeCat('')}
+                className="btn btn-sm d-inline-flex align-items-center gap-2"
+                style={{ background: 'rgba(10,173,10,0.1)', color: '#0aad0a', borderRadius: 20, fontWeight: 600, fontSize: '0.82rem' }}
+              >
+                <i className="fas fa-times-circle" />
+                {categories.find(c => c._id === selectedCat)?.name}&nbsp;×
+              </button>
+            )}
           </div>
         )}
 
@@ -152,6 +192,18 @@ export default function ProductsPage() {
             <div className="fc-spinner" />
             <p style={{ color: '#7d879c' }}>Loading products…</p>
           </div>
+        ) : error ? (
+          <div className="fc-empty">
+            <i className="fas fa-wifi" style={{ color: '#ef4444' }} />
+            <h4 style={{ color: '#ef4444' }}>Connection Error</h4>
+            <p>{error}</p>
+            <button
+              className="btn-green btn text-white px-4 py-2"
+              onClick={fetchProducts}
+            >
+              <i className="fas fa-redo me-2" />Retry
+            </button>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="fc-empty">
             <i className="fas fa-search" />
@@ -159,7 +211,7 @@ export default function ProductsPage() {
             <p>Try adjusting your search or filters</p>
             <button
               className="btn-green btn text-white px-4 py-2"
-              onClick={() => { setSearch(''); setSelectedCat(''); setPage(1) }}
+              onClick={clearAllFilters}
             >
               <i className="fas fa-undo me-2" />Clear Filters
             </button>

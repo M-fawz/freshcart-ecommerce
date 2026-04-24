@@ -1,14 +1,13 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import axios from 'axios'
+import axiosInstance from '../lib/axiosInstance'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -25,7 +24,7 @@ export default function LoginPage() {
     onSubmit: async (values, { setSubmitting }) => {
       setApiErr('')
       try {
-        const { data } = await axios.post(`${API}/api/v1/auth/signin`, values)
+        const { data } = await axiosInstance.post('/api/v1/auth/signin', values)
         if (data.message === 'success') {
           login(data.token)
           toast.success(`Welcome back, ${data.user.name}! 🎉`)

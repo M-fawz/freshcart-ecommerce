@@ -1,16 +1,15 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import axios from 'axios'
+import axiosInstance from '../../lib/axiosInstance'
 import toast from 'react-hot-toast'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
 
 function CheckoutContent() {
   const { cartId } = useParams()
@@ -30,14 +29,14 @@ function CheckoutContent() {
       const shippingAddress = { details: values.details, phone: values.phone, city: values.city }
       try {
         if (payType === 'cash') {
-          const { data } = await axios.post(`${API}/api/v1/orders/${cartId}`, { shippingAddress }, { headers: { token: userToken } })
+          const { data } = await axiosInstance.post(`/api/v1/orders/${cartId}`, { shippingAddress }, { headers: { token: userToken } })
           if (data.status === 'success') {
             await clearCart()
             toast.success('Order placed! 🎉')
             router.push('/allorders')
           }
         } else {
-          const { data } = await axios.post(`${API}/api/v1/orders/checkout-session/${cartId}?url=${window.location.origin}`, { shippingAddress }, { headers: { token: userToken } })
+          const { data } = await axiosInstance.post(`/api/v1/orders/checkout-session/${cartId}?url=${window.location.origin}`, { shippingAddress }, { headers: { token: userToken } })
           if (data.status === 'success') window.location.href = data.session.url
         }
       } catch (err) {

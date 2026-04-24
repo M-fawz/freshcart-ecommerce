@@ -1,11 +1,10 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import axios from 'axios'
+import axiosInstance from '../lib/axiosInstance'
 import ProtectedRoute from '../components/ProtectedRoute'
 import { useAuth } from '../context/AuthContext'
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
 
 function getUserId(token) {
   try { return JSON.parse(atob(token.split('.')[1])).id } catch { return null }
@@ -20,7 +19,7 @@ function OrdersContent() {
     if (!userToken) return
     const uid = getUserId(userToken)
     if (!uid) { setLoading(false); return }
-    axios.get(`${API}/api/v1/orders/user/${uid}`)
+    axiosInstance.get(`/api/v1/orders/user/${uid}`)
       .then(r => setOrders(Array.isArray(r.data) ? r.data : []))
       .catch(console.error)
       .finally(() => setLoading(false))

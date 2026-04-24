@@ -1,21 +1,24 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import axios from 'axios'
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
+import axiosInstance from '../lib/axiosInstance'
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState([])
   const [subs, setSubs] = useState({})
   const [loading, setLoading] = useState(true)
+  const [error, setError]   = useState(null)
   const [expanded, setExpanded] = useState(null)
   const [loadingSub, setLoadingSub] = useState(false)
 
   useEffect(() => {
-    axios.get(`${API}/api/v1/categories`)
+    axiosInstance.get('/api/v1/categories')
       .then(r => setCategories(r.data.data || []))
-      .catch(console.error)
+      .catch(err => {
+        console.error(err)
+        setError('Failed to load categories. Please check your connection and try again.')
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -25,7 +28,7 @@ export default function CategoriesPage() {
     if (!subs[cat._id]) {
       setLoadingSub(true)
       try {
-        const { data } = await axios.get(`${API}/api/v1/categories/${cat._id}/subcategories`)
+        const { data } = await axiosInstance.get(`/api/v1/categories/${cat._id}/subcategories`)
         setSubs(prev => ({ ...prev, [cat._id]: data.data || [] }))
       } catch (err) { console.error(err) }
       finally { setLoadingSub(false) }
@@ -49,6 +52,18 @@ export default function CategoriesPage() {
       <div className="container pb-5">
         {loading ? (
           <div className="fc-loader"><div className="fc-spinner" /></div>
+        ) : error ? (
+          <div className="fc-empty">
+            <i className="fas fa-wifi" style={{ color: '#ef4444' }} />
+            <h4 style={{ color: '#ef4444' }}>Connection Error</h4>
+            <p>{error}</p>
+            <button
+              className="btn-green btn text-white px-4 py-2"
+              onClick={() => { setError(null); setLoading(true); axiosInstance.get('/api/v1/categories').then(r => setCategories(r.data.data || [])).catch(e => setError(e.message)).finally(() => setLoading(false)) }}
+            >
+              <i className="fas fa-redo me-2" />Retry
+            </button>
+          </div>
         ) : (
           <>
             <div className="row g-3">
@@ -78,7 +93,7 @@ export default function CategoriesPage() {
                 ) : subs[expanded]?.length > 0 ? (
                   <div className="d-flex flex-wrap gap-2">
                     {subs[expanded].map(sub => (
-                      <Link key={sub._id} href="/products" className="text-decoration-none">
+                      <Link key={sub._id} href={`/products?subcategory=${sub._id}&name=${encodeURIComponent(sub.name)}`} className="text-decoration-none">
                         <span style={{ background:'#fff', border:'1.5px solid #0aad0a', color:'#0aad0a', padding:'5px 16px', borderRadius:20, fontWeight:600, fontSize:'0.86rem', display:'block', transition:'all 0.2s', cursor:'pointer' }}
                           onMouseEnter={e => { e.target.style.background='#0aad0a'; e.target.style.color='#fff' }}
                           onMouseLeave={e => { e.target.style.background='#fff'; e.target.style.color='#0aad0a' }}>

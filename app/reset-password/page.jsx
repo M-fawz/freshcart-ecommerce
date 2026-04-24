@@ -1,13 +1,12 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import axios from 'axios'
+import axiosInstance from '../lib/axiosInstance'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -22,7 +21,7 @@ export default function ResetPasswordPage() {
     }),
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        const { data } = await axios.put(`${API}/api/v1/auth/resetPassword`, values)
+        const { data } = await axiosInstance.put('/api/v1/auth/resetPassword', values)
         if (data.token) { login(data.token); toast.success('Password reset! 🎉'); router.push('/') }
       } catch (err) {
         toast.error(err.response?.data?.message || 'Reset failed')

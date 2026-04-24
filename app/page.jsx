@@ -1,11 +1,10 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import axios from 'axios'
+import axiosInstance from './lib/axiosInstance'
 import Slider from 'react-slick'
 import ProductCard from './components/ProductCard'
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
 
 /* ── Hero slides ── */
 const SLIDES = [
@@ -50,12 +49,12 @@ export default function HomePage() {
   const [nlEmail,    setNlEmail]    = useState('')
 
   useEffect(() => {
-    axios.get(`${API}/api/v1/products?limit=16`)
+    axiosInstance.get('/api/v1/products?limit=16')
       .then(r => setProducts(r.data.data || []))
       .catch(console.error)
       .finally(() => setLoadingP(false))
 
-    axios.get(`${API}/api/v1/categories`)
+    axiosInstance.get('/api/v1/categories')
       .then(r => setCategories(r.data.data || []))
       .catch(console.error)
       .finally(() => setLoadingC(false))

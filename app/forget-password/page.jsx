@@ -1,12 +1,11 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import axios from 'axios'
+import axiosInstance from '../lib/axiosInstance'
 import toast from 'react-hot-toast'
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
 
 export default function ForgetPasswordPage() {
   const router = useRouter()
@@ -16,7 +15,7 @@ export default function ForgetPasswordPage() {
     validationSchema: Yup.object({ email: Yup.string().email('Invalid email').required('Email required') }),
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        const { data } = await axios.post(`${API}/api/v1/auth/forgotPasswords`, values)
+        const { data } = await axiosInstance.post('/api/v1/auth/forgotPasswords', values)
         if (data.statusMsg === 'success') {
           toast.success('Reset code sent to your email! 📧')
           router.push('/verify-code')
